@@ -6,18 +6,14 @@ import 'package:queerie_test/utils/utils.dart';
 typedef ResponseConverter<T> = T Function(dynamic response);
 
 class DioClient with MainBoxMixin {
-  String baseUrl = const String.fromEnvironment("BASE_URL");
+  String baseUrl = ListAPI.baseUrl;
+  String apiKey = ListAPI.apiKey;
 
-  String? _auth;
   bool _isUnitTest = false;
   late Dio _dio;
 
   DioClient({bool isUnitTest = false}) {
     _isUnitTest = isUnitTest;
-
-    try {
-      _auth = getData(MainBoxKeys.token);
-    } catch (_) {}
 
     _dio = _createDio();
 
@@ -29,11 +25,6 @@ class DioClient with MainBoxMixin {
       /// Return static dio if is unit test
       return _dio;
     } else {
-      /// We need to recreate dio to avoid token issue after login
-      try {
-        _auth = getData(MainBoxKeys.token);
-      } catch (_) {}
-
       final dio = _createDio();
 
       if (!_isUnitTest) dio.interceptors.add(DioInterceptor());
@@ -48,9 +39,6 @@ class DioClient with MainBoxMixin {
           headers: {
             'Content-Type': 'application/json',
             'Accept': 'application/json',
-            if (_auth != null) ...{
-              'Authorization': 'Bearer $_auth',
-            },
           },
           receiveTimeout: const Duration(minutes: 1),
           connectTimeout: const Duration(minutes: 1),

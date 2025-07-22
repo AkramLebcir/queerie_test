@@ -2,11 +2,18 @@ import 'dart:convert';
 
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:queerie_test/core/api/api.dart';
 import 'package:queerie_test/utils/utils.dart';
 
 class DioInterceptor extends Interceptor {
   @override
   void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    // Append apikey to all requests
+    final apiKey = ListAPI.apiKey;
+    if (apiKey.isNotEmpty) {
+      options.queryParameters = Map<String, dynamic>.from(options.queryParameters)
+        ..['apikey'] = apiKey;
+    }
     String headerMessage = "";
     options.headers.forEach((k, v) => headerMessage += '► $k: $v\n');
 

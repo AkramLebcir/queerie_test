@@ -1,6 +1,6 @@
 class ListAPI {
   ListAPI._();
 
-  static const String stimulusSent = "/stimulus/sent/me";
-  static const String stimulusSend = "/stimulus/send";
+  static const String baseUrl = String.fromEnvironment('BASE_URL');
+  static const String apiKey = String.fromEnvironment('API_KEY');
 }
