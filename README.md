@@ -73,16 +73,6 @@ This project uses [GitHub Actions](.github/workflows/flutter_ci.yml) for:
 - Running tests and collecting coverage
 - (Optional) Uploading artifacts and coverage to Codecov
 
-## Feature Flags
-
-Feature flags are managed via Dart defines and a singleton service:
-
-```dart
-const String env = String.fromEnvironment('ENV', defaultValue: 'dev');
-```
-
-You can add more flags as needed and use them in your code for conditional features.
-
 ## TODO 📝
 
 - [✅] Documentation
@@ -107,11 +97,11 @@ You can add more flags as needed and use them in your code for conditional featu
 
 | Home Screen                                | Menu Screen                                 | Detail Screen                                        |
 |--------------------------------------------|---------------------------------------------|------------------------------------------------------|
-| ![Home](assets/images/Screenshot_home.png) | ![Menu](assets/images/Screenshot_menu.png)  | ![Detail](assets/images/Screenshot_movie_detail.png) |
+| ![Home](Screenshot_home.png) | ![Menu](Screenshot_menu.png)  | ![Detail](Screenshot_movie_detail.png) |
 
-| Search Screen                                       | Settings Screen                                 | Filter Screen                                  |
-|-----------------------------------------------------|-------------------------------------------------|------------------------------------------------|
-| ![Search](assets/images/Screenshot_search_list.png) | ![Settings](assets/images/Screenshot_setting.png) | ![Detail](assets/images/Screenshot_filter.png) |
+| Search Screen                                       | Settings Screen                                 | Filter Screen                    |
+|-----------------------------------------------------|-------------------------------------------------|----------------------------------|
+| ![Search](Screenshot_search_list.png) | ![Settings](Screenshot_setting.png) | ![Filter](Screenshot_filter.png) |
 
 ---
 
