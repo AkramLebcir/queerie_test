@@ -24,7 +24,7 @@ enum MainBoxKeys {
 
 mixin class MainBoxMixin {
   static late Box? mainBox;
-  static const _boxName = 'pavlok_stimulus_test';
+  static const _boxName = 'queerie_test';
 
   static Future<void> initHive(String prefixBox) async {
     // Initialize hive (persistent database)
