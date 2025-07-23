@@ -15,9 +15,9 @@ import 'package:queerie_test/features/features.dart';
 import 'package:queerie_test/utils/utils.dart';
 
 import '../../../../helpers/fake_path_provider_platform.dart';
-import '../../../../helpers/test_mock.mocks.dart';
 import 'package:queerie_test/features/general/pages/pages.dart';
-import '../../../../helpers/root_widget.dart';
+
+import '../../../../helpers/mocks.mocks.dart';
 
 class MockSettingsCubit extends MockCubit<DataHelper> implements SettingsCubit {}
 

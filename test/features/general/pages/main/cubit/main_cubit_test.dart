@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:queerie_test/features/general/pages/main/cubit/main_cubit.dart';
-import 'package:queerie_test/utils/helper/data_helper.dart';
 import '../../../../../helpers/root_widget.dart';
 import 'package:flutter/material.dart';
 
