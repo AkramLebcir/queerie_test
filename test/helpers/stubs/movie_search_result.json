@@ -1,0 +1,20 @@
+{
+  "Search": [
+    {
+      "Title": "The Matrix",
+      "Year": "1999",
+      "imdbID": "tt0133093",
+      "Type": "movie",
+      "Poster": "https://example.com/matrix.jpg"
+    },
+    {
+      "Title": "Inception",
+      "Year": "2010",
+      "imdbID": "tt1375666",
+      "Type": "movie",
+      "Poster": "https://example.com/inception.jpg"
+    }
+  ],
+  "totalResults": "2",
+  "Response": "True"
+} 

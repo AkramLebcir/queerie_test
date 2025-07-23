@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:flutter_screenutil/flutter_screenutil.dart';
 import 'package:queerie_test/core/localization/generated/strings.dart';
 import 'package:queerie_test/core/resources/styles.dart';
+import 'package:go_router/go_router.dart';
 
-Widget rootWidget(Widget body) {
+Widget rootWidget(
+  Widget body, {
+  GoRouter? routerConfig,
+}) {
   return ScreenUtilInit(
     designSize: const Size(375, 667),
     minTextAdapt: true,
     splitScreenMode: true,
-    builder: (_, __) => MaterialApp(
-      localizationsDelegates: Strings.localizationsDelegates,
-      supportedLocales: Strings.supportedLocales,
-      theme: ThemeData.light().copyWith(
+    builder: (_, __) {
+      final theme = ThemeData.light().copyWith(
         extensions: <ThemeExtension<dynamic>>[
           const CustomColors(
             background: Colors.white,
@@ -35,8 +37,22 @@ Widget rootWidget(Widget body) {
             red: Colors.red,
           ),
         ],
-      ),
-      home: Scaffold(body: body),
-    ),
+      );
+      if (routerConfig != null) {
+        return MaterialApp.router(
+          routerConfig: routerConfig,
+          localizationsDelegates: Strings.localizationsDelegates,
+          supportedLocales: Strings.supportedLocales,
+          theme: theme,
+        );
+      } else {
+        return MaterialApp(
+          localizationsDelegates: Strings.localizationsDelegates,
+          supportedLocales: Strings.supportedLocales,
+          theme: theme,
+          home: Scaffold(body: body),
+        );
+      }
+    },
   );
 } 
