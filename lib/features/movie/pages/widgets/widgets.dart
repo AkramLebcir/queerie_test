@@ -1,0 +1,12 @@
+export 'movie_card.dart';
+export 'movie_filter_modal.dart';
+export 'movie_search_bar.dart';
+export 'movie_active_filters.dart';
+export 'movie_popular_grid.dart';
+export 'movie_search_results_list.dart';
+export 'movie_empty_state.dart';
+export 'movie_poster_hero.dart';
+export 'movie_title_hero.dart';
+export 'movie_info_chips.dart';
+export 'movie_detail_info.dart';
+export 'movie_rating_row.dart'; 

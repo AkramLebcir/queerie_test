@@ -15,7 +15,11 @@ Future<void> serviceLocator({
     await sl.reset();
   }
   sl.registerSingleton<DioClient>(DioClient(isUnitTest: isUnitTest));
+  _dataSources();
+  _repositories();
+  _useCase();
   _cubit();
+  _bloc();
   if (isHiveEnable) {
     await _initHiveBoxes(
       isUnitTest: isUnitTest,
@@ -32,9 +36,31 @@ Future<void> _initHiveBoxes({
   sl.registerSingleton<MainBoxMixin>(MainBoxMixin());
 }
 
+/// Register repositories
+void _repositories() {
+  sl.registerLazySingleton<MovieRepository>(() => MovieRepositoryImpl(sl<MovieRemoteDatasource>()));
+}
+
+/// Register dataSources
+void _dataSources() {
+  sl.registerLazySingleton<MovieRemoteDatasource>(
+        () => MovieRemoteDatasourceImpl(sl<DioClient>()),
+  );
+}
+
+void _useCase() {
+  /// Movie
+  sl.registerLazySingleton(() => SearchMovies(sl()));
+  sl.registerLazySingleton(() => GetMovieDetail(sl()));
+}
 
 void _cubit() {
   /// General
   sl.registerFactory(() => SettingsCubit());
   sl.registerFactory(() => MainCubit());
+}
+
+void _bloc(){
+  /// Movie
+  sl.registerFactory(() => MovieSearchBloc(sl()));
 }
