@@ -4,27 +4,30 @@ import 'package:go_router/go_router.dart';
 import '../../domain/entities/movie_search_result.dart';
 import '../widgets/widgets.dart';
 import 'bloc/bloc.dart';
+import 'cubit/cubit.dart';
 
-class MovieDashboardPage extends StatefulWidget {
+class MovieDashboardPage extends StatelessWidget {
   const MovieDashboardPage({super.key});
 
   @override
-  State<MovieDashboardPage> createState() => _MovieDashboardPageState();
+  Widget build(BuildContext context) {
+    return BlocProvider(
+      create: (context) => DashboardCubit(),
+      child: const _MovieDashboardView(),
+    );
+  }
 }
 
-class _MovieDashboardPageState extends State<MovieDashboardPage> {
+class _MovieDashboardView extends StatefulWidget {
+  const _MovieDashboardView();
+
+  @override
+  State<_MovieDashboardView> createState() => _MovieDashboardViewState();
+}
+
+class _MovieDashboardViewState extends State<_MovieDashboardView> {
   final _searchController = TextEditingController();
   final _scrollController = ScrollController();
-  String _selectedType = '';
-  String _selectedYear = '';
-  bool _hasSearched = false;
-  int _currentPage = 1;
-  bool _isFetchingMore = false;
-  List<MovieSearchItemEntity> _searchResults = [];
-  final Map<String, List<MovieSearchItemEntity>> _popularResults = {
-    'Popular Movies': [],
-    'New Releases': [],
-  };
 
   @override
   void initState() {
@@ -41,71 +44,77 @@ class _MovieDashboardPageState extends State<MovieDashboardPage> {
   }
 
   void _onScroll() {
+    final cubit = context.read<DashboardCubit>();
+    final state = cubit.state;
+
     if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200 &&
-        !_isFetchingMore &&
-        _hasSearched) {
+        !state.isFetchingMore &&
+        state.hasSearched) {
       _fetchNextPage();
     }
   }
 
   Future<void> _fetchNextPage() async {
-    if (_isFetchingMore) return;
-    setState(() => _isFetchingMore = true);
-    
+    final cubit = context.read<DashboardCubit>();
+    final state = cubit.state;
+
+    if (state.isFetchingMore) return;
+
+    cubit.setFetchingMore(true);
+    cubit.incrementPage();
+
     context.read<MovieSearchBloc>().add(MovieSearchQueryChanged(
       _searchController.text,
-      type: _selectedType,
-      year: _selectedYear,
-      page: _currentPage + 1,
+      type: state.selectedType,
+      year: state.selectedYear,
+      page: state.currentPage,
       append: true,
     ));
-    
-    setState(() => _currentPage++);
   }
 
   Future<void> _fetchPopularMovies() async {
+    final cubit = context.read<DashboardCubit>();
+    final state = cubit.state;
     final currentYear = DateTime.now().year.toString();
+
     // Popular Movies: use selected year if set, otherwise no year filter
     context.read<MovieSearchBloc>().add(MovieSearchQueryChanged(
       'movie',
-      type: _selectedType.isNotEmpty ? _selectedType : null,
-      year: _selectedYear.isNotEmpty ? _selectedYear : null,
+      type: state.selectedType.isNotEmpty ? state.selectedType : null,
+      year: state.selectedYear.isNotEmpty ? state.selectedYear : null,
       page: 1,
     ));
 
     // New Releases: always use current year
     context.read<MovieSearchBloc>().add(MovieSearchQueryChanged(
       'movie',
-      type: _selectedType.isNotEmpty ? _selectedType : null,
+      type: state.selectedType.isNotEmpty ? state.selectedType : null,
       year: currentYear,
       page: 1,
     ));
   }
 
   void _showFilterSheet() {
+    final cubit = context.read<DashboardCubit>();
+    final state = cubit.state;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       builder: (modalContext) => MovieFilterModal(
-        initialType: _selectedType,
-        initialYear: _selectedYear,
+        initialType: state.selectedType,
+        initialYear: state.selectedYear,
         onApply: (type, year) async {
-          setState(() {
-            _selectedType = type ?? '';
-            _selectedYear = year ?? '';
-          });
-          if (_hasSearched) {
+          cubit.setFilters(type: type, year: year);
+          if (state.hasSearched) {
             _submitSearch();
           } else {
             await _fetchPopularMovies();
           }
         },
         onReset: () {
-          setState(() {
-            _selectedType = '';
-            _selectedYear = '';
-          });
-          if (_hasSearched) {
+          cubit.clearFilters();
+          if (state.hasSearched) {
             _submitSearch();
           } else {
             _fetchPopularMovies();
@@ -119,37 +128,60 @@ class _MovieDashboardPageState extends State<MovieDashboardPage> {
     final query = _searchController.text.trim();
     if (query.isEmpty) return;
 
-    setState(() {
-      _hasSearched = true;
-      _currentPage = 1;
-      _searchResults = [];
-    });
+    final cubit = context.read<DashboardCubit>();
+    final state = cubit.state;
+
+    cubit.setSearchMode(true);
+    cubit.resetPage();
 
     context.read<MovieSearchBloc>().add(MovieSearchQueryChanged(
       query,
-      type: _selectedType,
-      year: _selectedYear,
+      type: state.selectedType,
+      year: state.selectedYear,
       page: 1,
     ));
   }
 
   void _resetSearchState() {
-    setState(() {
-      _hasSearched = false;
-      _currentPage = 1;
-      _searchResults = [];
-      _searchController.clear();
-    });
+    final cubit = context.read<DashboardCubit>();
+
+    cubit.resetSearchState();
+    _searchController.clear();
+
     context.read<MovieSearchBloc>().add(MovieSearchCleared());
     _fetchPopularMovies();
   }
 
   void _resetFilters() {
-    setState(() {
-      _selectedType = '';
-      _selectedYear = '';
-    });
-    if (_hasSearched) {
+    final cubit = context.read<DashboardCubit>();
+    final state = cubit.state;
+
+    cubit.clearFilters();
+    if (state.hasSearched) {
+      _submitSearch();
+    } else {
+      _fetchPopularMovies();
+    }
+  }
+
+  void _removeTypeFilter() {
+    final cubit = context.read<DashboardCubit>();
+    final state = cubit.state;
+
+    cubit.removeTypeFilter();
+    if (state.hasSearched) {
+      _submitSearch();
+    } else {
+      _fetchPopularMovies();
+    }
+  }
+
+  void _removeYearFilter() {
+    final cubit = context.read<DashboardCubit>();
+    final state = cubit.state;
+
+    cubit.removeYearFilter();
+    if (state.hasSearched) {
       _submitSearch();
     } else {
       _fetchPopularMovies();
@@ -176,86 +208,80 @@ class _MovieDashboardPageState extends State<MovieDashboardPage> {
               onSubmitted: (_) => _submitSearch(),
             ),
             const SizedBox(height: 12),
-            if (_selectedType.isNotEmpty || _selectedYear.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 12),
-                child: MovieActiveFilters(
-                  type: _selectedType,
-                  year: _selectedYear,
-                  onClearAll: _resetFilters,
-                  onRemoveType: _selectedType.isNotEmpty
-                      ? () {
-                          setState(() => _selectedType = '');
-                          if (_hasSearched) {
-                            _submitSearch();
-                          } else {
-                            _fetchPopularMovies();
-                          }
-                        }
-                      : null,
-                  onRemoveYear: _selectedYear.isNotEmpty
-                      ? () {
-                          setState(() => _selectedYear = '');
-                          if (_hasSearched) {
-                            _submitSearch();
-                          } else {
-                            _fetchPopularMovies();
-                          }
-                        }
-                      : null,
-                ),
-              ),
+            BlocBuilder<DashboardCubit, DashboardState>(
+              builder: (context, state) {
+                if (state.selectedType.isNotEmpty || state.selectedYear.isNotEmpty) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 12),
+                    child: MovieActiveFilters(
+                      type: state.selectedType,
+                      year: state.selectedYear,
+                      onClearAll: _resetFilters,
+                      onRemoveType: state.selectedType.isNotEmpty ? _removeTypeFilter : null,
+                      onRemoveYear: state.selectedYear.isNotEmpty ? _removeYearFilter : null,
+                    ),
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
             Expanded(
-              child: BlocConsumer<MovieSearchBloc, MovieSearchState>(
-                listener: (context, state) {
-                  if (state is MovieSearchLoaded && !_hasSearched) {
-                      _popularResults['Popular Movies'] = state.result.search;
-                      _popularResults['New Releases'] = state.result.search;
-                  } else if (state is MovieSearchLoaded && _hasSearched) {
-                    setState(() {
-                      if (state.result.search.isNotEmpty) {
-                        _searchResults = state.result.search;
-                        _isFetchingMore = false;
-                      }
-                    });
+              child: BlocListener<MovieSearchBloc, MovieSearchState>(
+                listener: (context, searchState) {
+                  final cubit = context.read<DashboardCubit>();
+                  final dashboardState = cubit.state;
+
+                  if (searchState is MovieSearchLoaded && !dashboardState.hasSearched) {
+                    cubit.updatePopularResults('Popular Movies', searchState.result.search);
+                    cubit.updatePopularResults('New Releases', searchState.result.search);
+                  } else if (searchState is MovieSearchLoaded && dashboardState.hasSearched) {
+                    if (searchState.result.search.isNotEmpty) {
+                      cubit.setSearchResults(searchState.result.search);
+                    }
                   }
                 },
-                builder: (context, state) {
-                  if (state is MovieSearchLoading && !_isFetchingMore) {
-                    return const Center(child: CircularProgressIndicator());
-                  }
-
-                  if (state is MovieSearchError) {
-                    return MovieEmptyState(
-                      message: state.message,
-                      onRetry: () {
-                        if (_hasSearched) {
-                          _submitSearch();
-                        } else {
-                          _fetchPopularMovies();
+                child: BlocBuilder<MovieSearchBloc, MovieSearchState>(
+                  builder: (context, searchState) {
+                    return BlocBuilder<DashboardCubit, DashboardState>(
+                      builder: (context, dashboardState) {
+                        if (searchState is MovieSearchLoading && !dashboardState.isFetchingMore) {
+                          return const Center(child: CircularProgressIndicator());
                         }
+
+                        if (searchState is MovieSearchError) {
+                          return MovieEmptyState(
+                            message: searchState.message,
+                            onRetry: () {
+                              if (dashboardState.hasSearched) {
+                                _submitSearch();
+                              } else {
+                                _fetchPopularMovies();
+                              }
+                            },
+                          );
+                        }
+
+                        if (dashboardState.hasSearched) {
+                          if (dashboardState.searchResults.isEmpty && searchState is! MovieSearchLoading) {
+                            return const MovieEmptyState();
+                          }
+                          return MovieSearchResultsList(
+                            results: dashboardState.searchResults,
+                            isFetchingMore: dashboardState.isFetchingMore,
+                            hasMoreResults: dashboardState.searchResults.length < (searchState is MovieSearchLoaded ? int.parse(searchState.result.totalResults) : 0),
+                            scrollController: _scrollController,
+                            onCardTap: _navigateToDetail,
+                          );
+                        }
+
+                        return MoviePopularGrid(
+                          popularResults: dashboardState.popularResults,
+                          onCardTap: _navigateToDetail,
+                        );
                       },
                     );
-                  }
-
-                  if (_hasSearched) {
-                    if (_searchResults.isEmpty && state is! MovieSearchLoading) {
-                      return const MovieEmptyState();
-                    }
-                    return MovieSearchResultsList(
-                      results: _searchResults,
-                      isFetchingMore: _isFetchingMore,
-                      hasMoreResults: _searchResults.length < (state is MovieSearchLoaded ? int.parse(state.result.totalResults) : 0),
-                      scrollController: _scrollController,
-                      onCardTap: _navigateToDetail,
-                    );
-                  }
-
-                  return MoviePopularGrid(
-                    popularResults: _popularResults,
-                    onCardTap: _navigateToDetail,
-                  );
-                },
+                  },
+                ),
               ),
             ),
           ],

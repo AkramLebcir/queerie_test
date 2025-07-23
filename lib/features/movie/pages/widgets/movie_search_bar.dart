@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:queerie_test/core/localization/generated/strings.dart';
 
-class MovieSearchBar extends StatelessWidget {
+class MovieSearchBar extends StatefulWidget {
   final TextEditingController controller;
   final bool hasText;
   final VoidCallback onFilter;
@@ -20,7 +20,37 @@ class MovieSearchBar extends StatelessWidget {
   });
 
   @override
+  State<MovieSearchBar> createState() => _MovieSearchBarState();
+}
+
+class _MovieSearchBarState extends State<MovieSearchBar> {
+  late FocusNode _focusNode;
+  bool _isFocused = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _focusNode = FocusNode();
+    _focusNode.addListener(_onFocusChange);
+  }
+
+  @override
+  void dispose() {
+    _focusNode.removeListener(_onFocusChange);
+    _focusNode.dispose();
+    super.dispose();
+  }
+
+  void _onFocusChange() {
+    setState(() {
+      _isFocused = _focusNode.hasFocus;
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final shouldShowButtons = widget.hasText || _isFocused;
+
     return Row(
       children: [
         Expanded(
@@ -28,7 +58,8 @@ class MovieSearchBar extends StatelessWidget {
             elevation: 2,
             borderRadius: BorderRadius.circular(12),
             child: TextField(
-              controller: controller,
+              controller: widget.controller,
+              focusNode: _focusNode,
               decoration: InputDecoration(
                 contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
                 hintText: Strings.of(context)!.searchHint,
@@ -44,25 +75,25 @@ class MovieSearchBar extends StatelessWidget {
                     IconButton(
                       icon: const Icon(Icons.filter_list),
                       tooltip: Strings.of(context)!.filter,
-                      onPressed: onFilter,
+                      onPressed: widget.onFilter,
                     ),
-                    if (hasText)
+                    if (shouldShowButtons)
                       IconButton(
                         icon: const Icon(Icons.clear),
                         tooltip: Strings.of(context)!.clear,
-                        onPressed: onClear,
+                        onPressed: widget.onClear,
                       ),
-                    if (hasText)
+                    if (shouldShowButtons)
                       IconButton(
                         icon: const Icon(Icons.search),
                         tooltip: Strings.of(context)!.search,
-                        onPressed: onSearch,
+                        onPressed: widget.onSearch,
                       ),
                   ],
                 ),
               ),
               textInputAction: TextInputAction.search,
-              onSubmitted: onSubmitted,
+              onSubmitted: widget.onSubmitted,
             ),
           ),
         ),

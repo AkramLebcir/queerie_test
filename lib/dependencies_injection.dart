@@ -58,6 +58,8 @@ void _cubit() {
   /// General
   sl.registerFactory(() => SettingsCubit());
   sl.registerFactory(() => MainCubit());
+  /// Movie
+  sl.registerFactory(() => DashboardCubit());
 }
 
 void _bloc(){
